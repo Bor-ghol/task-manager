@@ -1,45 +1,68 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Task, TaskFormData } from '@/types/task';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
+import { Task, TaskFormData } from '@/types/task';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 const AppContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem 0;
+  padding: 2rem 1rem;
+
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
 `;
 
-const Container = styled.div`
+const MainContent = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 15px;
+  }
 `;
 
-const Header = styled.header`
+const Header = styled.div`
   text-align: center;
   margin-bottom: 3rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 2rem;
+  }
 `;
 
 const Title = styled.h1`
-  color: white;
   font-size: 3rem;
   font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+
   @media (max-width: 768px) {
     font-size: 2rem;
   }
 `;
 
 const Subtitle = styled.p`
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.25rem;
-  margin: 0;
+  font-size: 1.2rem;
+  color: #666;
+  font-weight: 500;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const StatsContainer = styled.div`
@@ -47,62 +70,84 @@ const StatsContainer = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
 `;
 
 const StatCard = styled.div<{ $color: string }>`
-  background: white;
+  background: ${props => props.$color};
+  color: white;
   padding: 1.5rem;
   border-radius: 12px;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-top: 4px solid ${props => props.$color};
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const StatNumber = styled.div`
   font-size: 2rem;
   font-weight: 700;
-  color: #1f2937;
   margin-bottom: 0.5rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const StatLabel = styled.div`
-  color: #6b7280;
+  font-size: 0.9rem;
+  opacity: 0.9;
   font-weight: 500;
 `;
 
 const FilterContainer = styled.div`
-  background: white;
-  padding: 1rem 2rem;
-  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  
+  flex-wrap: wrap;
+
   @media (max-width: 768px) {
-    margin: 0 1rem 2rem 1rem;
-    padding: 1rem;
+    gap: 0.5rem;
   }
 `;
 
-const FilterButtons = styled.div`
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: center;
-`;
-
 const FilterButton = styled.button<{ $active: boolean }>`
-  padding: 0.5rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: ${props => props.$active ? '#3b82f6' : 'white'};
-  color: ${props => props.$active ? 'white' : '#374151'};
-  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  background: ${props => props.$active 
+    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+    : '#f8f9fa'};
+  color: ${props => props.$active ? 'white' : '#666'};
+  box-shadow: ${props => props.$active 
+    ? '0 4px 15px rgba(102, 126, 234, 0.4)' 
+    : '0 2px 8px rgba(0, 0, 0, 0.1)'};
 
   &:hover {
-    border-color: #3b82f6;
-    ${props => !props.$active && 'background: #f3f4f6;'}
+    transform: translateY(-2px);
+    box-shadow: ${props => props.$active 
+      ? '0 6px 20px rgba(102, 126, 234, 0.4)' 
+      : '0 4px 12px rgba(0, 0, 0, 0.15)'};
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -115,23 +160,29 @@ export default function Home() {
   const addTask = (taskData: TaskFormData) => {
     const newTask: Task = {
       id: Date.now().toString(),
-      ...taskData,
+      title: taskData.title,
+      description: taskData.description,
+      priority: taskData.priority,
       completed: false,
       createdAt: new Date().toISOString(),
     };
-    setTasks(prev => [newTask, ...prev]);
+    setTasks([...tasks, newTask]);
   };
 
-  const toggleTaskComplete = (id: string) => {
-    setTasks(prev => 
-      prev.map(task => 
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
+  const toggleTask = (id: string) => {
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, completed: !task.completed } : task
+    ));
   };
 
   const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
+    setTasks(tasks.filter(task => task.id !== id));
+  };
+
+  const editTask = (id: string, updates: Partial<Task>) => {
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, ...updates } : task
+    ));
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -147,69 +198,67 @@ export default function Home() {
 
   const stats = {
     total: tasks.length,
-    completed: tasks.filter(t => t.completed).length,
-    active: tasks.filter(t => !t.completed).length,
-    highPriority: tasks.filter(t => t.priority === 'high' && !t.completed).length,
+    completed: tasks.filter(task => task.completed).length,
+    active: tasks.filter(task => !task.completed).length,
+    high: tasks.filter(task => task.priority === 'high' && !task.completed).length,
   };
 
   return (
     <AppContainer>
-      <Container>
+      <MainContent>
         <Header>
           <Title>Task Manager</Title>
-          <Subtitle>Stay organized and productive</Subtitle>
+          <Subtitle>Organize your tasks efficiently and boost your productivity</Subtitle>
         </Header>
 
         <StatsContainer>
-          <StatCard $color="#3b82f6">
+          <StatCard $color="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
             <StatNumber>{stats.total}</StatNumber>
             <StatLabel>Total Tasks</StatLabel>
           </StatCard>
-          <StatCard $color="#10b981">
+          <StatCard $color="linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%)">
             <StatNumber>{stats.completed}</StatNumber>
             <StatLabel>Completed</StatLabel>
           </StatCard>
-          <StatCard $color="#f59e0b">
+          <StatCard $color="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
             <StatNumber>{stats.active}</StatNumber>
             <StatLabel>Active</StatLabel>
           </StatCard>
-          <StatCard $color="#ef4444">
-            <StatNumber>{stats.highPriority}</StatNumber>
+          <StatCard $color="linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)">
+            <StatNumber>{stats.high}</StatNumber>
             <StatLabel>High Priority</StatLabel>
           </StatCard>
         </StatsContainer>
 
-        <TaskForm onSubmit={addTask} />
-
         <FilterContainer>
-          <FilterButtons>
-            <FilterButton 
-              $active={filter === 'all'} 
-              onClick={() => setFilter('all')}
-            >
-              All Tasks ({stats.total})
-            </FilterButton>
-            <FilterButton 
-              $active={filter === 'active'} 
-              onClick={() => setFilter('active')}
-            >
-              Active ({stats.active})
-            </FilterButton>
-            <FilterButton 
-              $active={filter === 'completed'} 
-              onClick={() => setFilter('completed')}
-            >
-              Completed ({stats.completed})
-            </FilterButton>
-          </FilterButtons>
+          <FilterButton 
+            $active={filter === 'all'} 
+            onClick={() => setFilter('all')}
+          >
+            All Tasks ({stats.total})
+          </FilterButton>
+          <FilterButton 
+            $active={filter === 'active'} 
+            onClick={() => setFilter('active')}
+          >
+            Active ({stats.active})
+          </FilterButton>
+          <FilterButton 
+            $active={filter === 'completed'} 
+            onClick={() => setFilter('completed')}
+          >
+            Completed ({stats.completed})
+          </FilterButton>
         </FilterContainer>
 
+        <TaskForm onSubmit={addTask} />
         <TaskList 
           tasks={filteredTasks}
-          onToggleComplete={toggleTaskComplete}
-          onDeleteTask={deleteTask}
+          onToggle={toggleTask}
+          onDelete={deleteTask}
+          onEdit={editTask}
         />
-      </Container>
+      </MainContent>
     </AppContainer>
   );
 }
